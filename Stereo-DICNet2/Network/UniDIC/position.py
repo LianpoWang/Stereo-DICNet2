@@ -27,16 +27,16 @@ class PositionEmbeddingSine(nn.Module):
         # x = tensor_list.tensors  # [B, C, H, W]
         # mask = tensor_list.mask  # [B, H, W], input with padding, valid as 0
         b, c, h, w = x.size()
-        mask = torch.ones((b, h, w), device=x.device)  # [B, H, W]
-        y_embed = mask.cumsum(1, dtype=torch.float32) #在行方向累加#(b , h , w)
-        x_embed = mask.cumsum(2, dtype=torch.float32) #在列方向累加#(b , h , w)
+        mask = torch.ones((b, h, w), device=x.device)  
+        y_embed = mask.cumsum(1, dtype=torch.float32)
+        x_embed = mask.cumsum(2, dtype=torch.float32) 
         if self.normalize:
             eps = 1e-6
             y_embed = y_embed / (y_embed[:, -1:, :] + eps) * self.scale
             x_embed = x_embed / (x_embed[:, :, -1:] + eps) * self.scale
 
-        dim_t = torch.arange(self.num_pos_feats, dtype=torch.float32, device=x.device)  #torch.arange()用于返回一个张量,张量中的元素是在一定范围内按一定步长取值的整数
-        dim_t = self.temperature ** (2 * (dim_t // 2) / self.num_pos_feats)   #意思应该是随着维度的增加，位置编码的周期从低频到高频变化，帮助在不同尺度上捕捉信息
+        dim_t = torch.arange(self.num_pos_feats, dtype=torch.float32, device=x.device)  
+        dim_t = self.temperature ** (2 * (dim_t // 2) / self.num_pos_feats)   
 
         pos_x = x_embed[:, :, :, None] / dim_t
         pos_y = y_embed[:, :, :, None] / dim_t
@@ -44,3 +44,4 @@ class PositionEmbeddingSine(nn.Module):
         pos_y = torch.stack((pos_y[:, :, :, 0::2].sin(), pos_y[:, :, :, 1::2].cos()), dim=4).flatten(3)
         pos = torch.cat((pos_y, pos_x), dim=3).permute(0, 3, 1, 2)
         return pos
+
