@@ -1,9 +1,6 @@
 import torch.nn as nn
-
 from .trident_conv import MultiScaleTridentConv
 
-
-#特征提取
 
 class ResidualBlock(nn.Module):
     def __init__(self, in_planes, planes, norm_layer=nn.InstanceNorm2d, stride=1, dilation=1,
@@ -40,7 +37,6 @@ class ResidualBlock(nn.Module):
 
 class CNNEncoder(nn.Module):
     def __init__(self, output_dim=128,
-                 #norm_layer=nn.InstanceNorm2d,  #V1 使用的是7*7的卷积 nn.InstanceNorm2d归一化
                  norm_layer=nn.BatchNorm2d,
                  num_output_scales=1,
                  **kwargs,
@@ -49,13 +45,6 @@ class CNNEncoder(nn.Module):
         self.num_branch = num_output_scales
 
         feature_dims = [64, 96, 128]
-
-        #V1 使用的是7*7的卷积 nn.InstanceNorm2d归一化 ——————开始
-        # self.conv1 = nn.Conv2d(1, feature_dims[0], kernel_size=7, stride=2, padding=3, bias=False)  # 1/2
-        # self.norm1 = norm_layer(feature_dims[0])
-        # self.relu1 = nn.ReLU(inplace=True)
-        # V1 使用的是7*7的卷积 nn.InstanceNorm2d归一化  ——————结束
-
         self.firstconv = nn.Sequential(nn.Conv2d(1, feature_dims[0], kernel_size=3, stride=2, padding=1, bias=False),
                                        nn.BatchNorm2d(feature_dims[0]),
                                        nn.LeakyReLU(0.2, True),
@@ -64,17 +53,16 @@ class CNNEncoder(nn.Module):
                                        nn.LeakyReLU(0.2, True),
                                        nn.Conv2d(feature_dims[0], feature_dims[0], kernel_size=3, stride=1, padding=1, bias=False),
                                        nn.BatchNorm2d(feature_dims[0]),
-                                       nn.LeakyReLU(0.2, True))     # 1/2
+                                       nn.LeakyReLU(0.2, True))   
 
         self.in_planes = feature_dims[0]
-        self.layer1 = self._make_layer(feature_dims[0], stride=1, norm_layer=norm_layer)  # 1/2
-        self.layer2 = self._make_layer(feature_dims[1], stride=2, norm_layer=norm_layer)  # 1/4
+        self.layer1 = self._make_layer(feature_dims[0], stride=1, norm_layer=norm_layer) 
+        self.layer2 = self._make_layer(feature_dims[1], stride=2, norm_layer=norm_layer) 
 
-        # highest resolution 1/4 or 1/8
         stride = 2 if num_output_scales == 1 else 1
         self.layer3 = self._make_layer(feature_dims[2], stride=stride,
                                        norm_layer=norm_layer,
-                                       )  # 1/4 or 1/8
+                                       )  
 
         self.conv2 = nn.Conv2d(feature_dims[2], output_dim, 1, 1, 0)
 
@@ -114,23 +102,20 @@ class CNNEncoder(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        # V1  ——————开始
-        # x = self.conv1(x)
-        # x = self.norm1(x)
-        # x = self.relu1(x)
-        # V1  ——————结束
 
-        x = self.firstconv(x) #64通道
 
-        x = self.layer1(x)  # 1/2  64通道
-        x = self.layer2(x)  # 1/4  96通道
-        x = self.layer3(x)  # 1/8 or 1/4  128通道
+        x = self.firstconv(x) 
 
-        x = self.conv2(x)   #128通道
+        x = self.layer1(x) 
+        x = self.layer2(x) 
+        x = self.layer3(x) 
+
+        x = self.conv2(x)
 
         if self.num_branch > 1:
-            out = self.trident_conv([x] * self.num_branch)  # high to low res
+            out = self.trident_conv([x] * self.num_branch) 
         else:
             out = [x]
 
         return out
+
