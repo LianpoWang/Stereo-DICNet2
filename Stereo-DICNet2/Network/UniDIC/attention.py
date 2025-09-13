@@ -9,9 +9,9 @@ def single_head_full_attention(q, k, v):
     # q, k, v: [B, L, C]
     assert q.dim() == k.dim() == v.dim() == 3
 
-    scores = torch.matmul(q, k.permute(0, 2, 1)) / (q.size(2) ** .5)  # [B, L, L]
-    attn = torch.softmax(scores, dim=2)  # [B, L, L]
-    out = torch.matmul(attn, v)  # [B, L, C]
+    scores = torch.matmul(q, k.permute(0, 2, 1)) / (q.size(2) ** .5)  
+    attn = torch.softmax(scores, dim=2)  
+    out = torch.matmul(attn, v) 
 
     return out
 
@@ -27,17 +27,17 @@ def single_head_full_attention_1d(q, k, v,
 
     b, _, c = q.size()
 
-    q = q.view(b, h, w, c)  # [B, H, W, C]
+    q = q.view(b, h, w, c) 
     k = k.view(b, h, w, c)
     v = v.view(b, h, w, c)
 
     scale_factor = c ** 0.5
 
-    scores = torch.matmul(q, k.permute(0, 1, 3, 2)) / scale_factor  # [B, H, W, W]
+    scores = torch.matmul(q, k.permute(0, 1, 3, 2)) / scale_factor
 
     attn = torch.softmax(scores, dim=-1)
 
-    out = torch.matmul(attn, v).view(b, -1, c)  # [B, H*W, C]
+    out = torch.matmul(attn, v).view(b, -1, c)  
 
     return out
 
@@ -50,7 +50,6 @@ def single_head_split_window_attention(q, k, v,
                                        attn_mask=None,
                                        ):
     # ref: https://github.com/microsoft/Swin-Transformer/blob/main/models/swin_transformer.py
-    # q, k, v: [B, L, C]
     assert q.dim() == k.dim() == v.dim() == 3
 
     assert h is not None and w is not None
@@ -60,7 +59,7 @@ def single_head_split_window_attention(q, k, v,
 
     b_new = b * num_splits * num_splits
 
-    window_size_h = h // num_splits     #向下取整   得到窗口大小
+    window_size_h = h // num_splits    
     window_size_w = w // num_splits
 
     q = q.view(b, h, w, c)  # [B, H, W, C]
@@ -74,23 +73,23 @@ def single_head_split_window_attention(q, k, v,
         shift_size_h = window_size_h // 2
         shift_size_w = window_size_w // 2
 
-        q = torch.roll(q, shifts=(-shift_size_h, -shift_size_w), dims=(1, 2))    #沿给定维度滚动张量输入
+        q = torch.roll(q, shifts=(-shift_size_h, -shift_size_w), dims=(1, 2))  
         k = torch.roll(k, shifts=(-shift_size_h, -shift_size_w), dims=(1, 2))
         v = torch.roll(v, shifts=(-shift_size_h, -shift_size_w), dims=(1, 2))
 
-    q = split_feature(q, num_splits=num_splits, channel_last=True)  # [B*K*K, H/K, W/K, C]
+    q = split_feature(q, num_splits=num_splits, channel_last=True) 
     k = split_feature(k, num_splits=num_splits, channel_last=True)
     v = split_feature(v, num_splits=num_splits, channel_last=True)
 
     scores = torch.matmul(q.view(b_new, -1, c), k.view(b_new, -1, c).permute(0, 2, 1)
-                          ) / scale_factor  # [B*K*K, H/K*W/K, H/K*W/K]
+                          ) / scale_factor 
 
     if with_shift:
         scores += attn_mask.repeat(b, 1, 1)
 
     attn = torch.softmax(scores, dim=-1)
 
-    out = torch.matmul(attn, v.view(b_new, -1, c))  # [B*K*K, H/K*W/K, C]
+    out = torch.matmul(attn, v.view(b_new, -1, c)) 
 
     out = merge_splits(out.view(b_new, h // num_splits, w // num_splits, c),
                        num_splits=num_splits, channel_last=True)  # [B, H, W, C]
@@ -137,22 +136,22 @@ def single_head_split_window_attention_1d(q, k, v,
         k = torch.roll(k, shifts=-shift_size_w, dims=1)
         v = torch.roll(v, shifts=-shift_size_w, dims=1)
 
-    q = split_feature_1d(q, num_splits=num_splits)  # [B*H*K, W/K, C]
+    q = split_feature_1d(q, num_splits=num_splits) 
     k = split_feature_1d(k, num_splits=num_splits)
     v = split_feature_1d(v, num_splits=num_splits)
 
     scores = torch.matmul(q.view(b_new, -1, c), k.view(b_new, -1, c).permute(0, 2, 1)
-                          ) / scale_factor  # [B*H*K, W/K, W/K]
+                          ) / scale_factor 
 
     if with_shift:
         # attn_mask: [K, W/K, W/K]
-        scores += attn_mask.repeat(b * h, 1, 1)  # [B*H*K, W/K, W/K]
+        scores += attn_mask.repeat(b * h, 1, 1)  
 
     attn = torch.softmax(scores, dim=-1)
 
-    out = torch.matmul(attn, v.view(b_new, -1, c))  # [B*H*K, W/K, C]
+    out = torch.matmul(attn, v.view(b_new, -1, c)) 
 
-    out = merge_splits_1d(out, h, num_splits=num_splits)  # [B, H, W, C]
+    out = merge_splits_1d(out, h, num_splits=num_splits)
 
     # shift back
     if with_shift:
@@ -193,7 +192,7 @@ class SelfAttnPropagation(nn.Module):
 
         b, c, h, w = feature0.size()
 
-        query = feature0.view(b, c, h * w).permute(0, 2, 1)  # [B, H*W, C]
+        query = feature0.view(b, c, h * w).permute(0, 2, 1)  
 
         # a note: the ``correct'' implementation should be:
         # ``query = self.q_proj(query), key = self.k_proj(query)''
@@ -201,16 +200,16 @@ class SelfAttnPropagation(nn.Module):
         # however, this doesn't affect the performance since the projection is a linear operation,
         # thus the two projection matrices for key can be merged
         # so I just leave it as is in order to not re-train all models :)
-        query = self.q_proj(query)  # [B, H*W, C]
-        key = self.k_proj(query)  # [B, H*W, C]
+        query = self.q_proj(query) 
+        key = self.k_proj(query) 
 
-        value = flow.view(b, flow.size(1), h * w).permute(0, 2, 1)  # [B, H*W, 2]
+        value = flow.view(b, flow.size(1), h * w).permute(0, 2, 1)  
 
-        scores = torch.matmul(query, key.permute(0, 2, 1)) / (c ** 0.5)  # [B, H*W, H*W]
+        scores = torch.matmul(query, key.permute(0, 2, 1)) / (c ** 0.5) 
         prob = torch.softmax(scores, dim=-1)
 
-        out = torch.matmul(prob, value)  # [B, H*W, 2]
-        out = out.view(b, h, w, value.size(-1)).permute(0, 3, 1, 2)  # [B, 2, H, W]
+        out = torch.matmul(prob, value)  
+        out = out.view(b, h, w, value.size(-1)).permute(0, 3, 1, 2)  
 
         return out
 
@@ -225,29 +224,30 @@ class SelfAttnPropagation(nn.Module):
         value_channel = flow.size(1)
 
         feature0_reshape = self.q_proj(feature0.view(b, c, -1).permute(0, 2, 1)
-                                       ).reshape(b * h * w, 1, c)  # [B*H*W, 1, C]
+                                       ).reshape(b * h * w, 1, c) 
 
         kernel_size = 2 * local_window_radius + 1
 
         feature0_proj = self.k_proj(feature0.view(b, c, -1).permute(0, 2, 1)).permute(0, 2, 1).reshape(b, c, h, w)
 
         feature0_window = F.unfold(feature0_proj, kernel_size=kernel_size,
-                                   padding=local_window_radius)  # [B, C*(2R+1)^2), H*W]
+                                   padding=local_window_radius)  
 
         feature0_window = feature0_window.view(b, c, kernel_size ** 2, h, w).permute(
-            0, 3, 4, 1, 2).reshape(b * h * w, c, kernel_size ** 2)  # [B*H*W, C, (2R+1)^2]
+            0, 3, 4, 1, 2).reshape(b * h * w, c, kernel_size ** 2) 
 
         flow_window = F.unfold(flow, kernel_size=kernel_size,
-                               padding=local_window_radius)  # [B, 2*(2R+1)^2), H*W]
+                               padding=local_window_radius)  
 
         flow_window = flow_window.view(b, value_channel, kernel_size ** 2, h, w).permute(
-            0, 3, 4, 2, 1).reshape(b * h * w, kernel_size ** 2, value_channel)  # [B*H*W, (2R+1)^2, 2]
+            0, 3, 4, 2, 1).reshape(b * h * w, kernel_size ** 2, value_channel)  
 
-        scores = torch.matmul(feature0_reshape, feature0_window) / (c ** 0.5)  # [B*H*W, 1, (2R+1)^2]
+        scores = torch.matmul(feature0_reshape, feature0_window) / (c ** 0.5) 
 
         prob = torch.softmax(scores, dim=-1)
 
         out = torch.matmul(prob, flow_window).view(b, h, w, value_channel
-                                                   ).permute(0, 3, 1, 2).contiguous()  # [B, 2, H, W]
+                                                   ).permute(0, 3, 1, 2).contiguous()  
 
         return out
+
