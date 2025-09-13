@@ -31,20 +31,9 @@ class UniDIC(nn.Module):
         self.upsample_factor = upsample_factor
         self.reg_refine = reg_refine
 
-        # CNN 特征提取
+        # CNN Extract features
         self.backbone = CNNEncoder(output_dim=self.feature_channels, num_output_scales=self.num_scales)
 
-        # # Transformer
-        # self.transformer = FeatureTransformer(num_layers=num_transformer_layers,
-        #                                       d_model=feature_channels,
-        #                                       nhead=num_head,
-        #                                       ffn_dim_expansion=ffn_dim_expansion,
-        #                                       )
-
-        # # propagation with self-attn
-        # self.feature_flow_attn = SelfAttnPropagation(in_channels=feature_channels)
-
-        #没有优化步骤
         if not self.reg_refine or task == 'depth':
             # convex upsampling simiar to RAFT
             # concat feature0 and low res flow as input
@@ -53,7 +42,6 @@ class UniDIC(nn.Module):
                                            nn.Conv2d(256, upsample_factor ** 2 * 9, 1, 1, 0))
             # thus far, all the learnable parameters are task-agnostic
 
-        # 有优化步骤
         if reg_refine:
             # optional task-specific local regression refinement
             self.refine_proj = nn.Conv2d(128, 256, 1)
@@ -74,8 +62,8 @@ class UniDIC(nn.Module):
                                            )
 
     def feature_extraction(self, img0, img1, img2):
-        concat = torch.cat((img0, img1, img2), dim=0)  # [3B, C, H, W]
-        features = self.backbone(concat)  # list of [3B, C, H, W], resolution from high to low
+        concat = torch.cat((img0, img1, img2), dim=0) 
+        features = self.backbone(concat) 
 
         # reverse: resolution from low to high
         features = features[::-1]
@@ -111,16 +99,16 @@ class UniDIC(nn.Module):
     def forward(self, img0, img1, img2):
 
         attn_type = None,
-        attn_splits_list = (4),   #NNN分成2*2个窗口  划分的个数越少 能处理的位移越大    8
-        corr_radius_list = (5),    #corr_radius_list = (-1), #-1代表全局匹配
+        attn_splits_list = (4),  
+        corr_radius_list = (5),   
         prop_radius_list = (-1),
-        num_reg_refine = (12),  #1
+        num_reg_refine = (12),  
         num_reg_refine = num_reg_refine[0]
 
         pred_bidir_flow = False,
-        task = "flow",  #'stereo'
-        pose = None,  # relative pose transform
-        min_depth = 1. / 0.5,  # inverse depth range
+        task = "flow", 
+        pose = None,
+        min_depth = 1. / 0.5, 
         max_depth = 1. / 10,
         num_depth_candidates = 64,
         pred_bidir_depth = False,
@@ -138,7 +126,7 @@ class UniDIC(nn.Module):
 
 
         if task != 'depth':
-            assert len(attn_splits_list) == len(corr_radius_list) == len(prop_radius_list) == self.num_scales   #1
+            assert len(attn_splits_list) == len(corr_radius_list) == len(prop_radius_list) == self.num_scales   
         else:
             assert len(attn_splits_list) == len(prop_radius_list) == self.num_scales == 1
 
@@ -148,7 +136,7 @@ class UniDIC(nn.Module):
 
             feature0_ori, feature1_ori, feature2_ori = feature0, feature1, feature2
 
-            upsample_factor = self.upsample_factor * (2 ** (self.num_scales - 1 - scale_idx))   #8*(2**(1-1-0) = 8
+            upsample_factor = self.upsample_factor * (2 ** (self.num_scales - 1 - scale_idx))  
 
 
             if scale_idx > 0:
@@ -159,68 +147,23 @@ class UniDIC(nn.Module):
 
             if disp is not None:
               disp = disp.detach()
-              zeros = torch.zeros_like(disp)  # [B, 1, H, W]
-              displace = torch.cat((-disp, zeros), dim=1)  # [B, 2, H, W]
-              feature1 = flow_warp(feature1, displace)  # [B, C, H, W]
+              zeros = torch.zeros_like(disp)  
+              displace = torch.cat((-disp, zeros), dim=1) 
+              feature1 = flow_warp(feature1, displace) 
 
 
 
             if flow is not None:
                 flow = flow.detach()
-                feature1 = flow_warp(feature1, flow)  # [B, C, H, W]
+                feature1 = flow_warp(feature1, flow)  
 
-            attn_splits = attn_splits_list[scale_idx]   # 2
+            attn_splits = attn_splits_list[scale_idx]  
 
             if task != 'depth':
-                corr_radius = corr_radius_list[scale_idx]   #-1
+                corr_radius = corr_radius_list[scale_idx] 
                 prop_radius = prop_radius_list[scale_idx]
 
-
-
-            # # add position to features attn_splits = 2 feature_channels = 128
-            # feature0, feature1,feature2= feature_add_position(feature0, feature1, feature2, attn_splits, self.feature_channels)
-
-           
-            # # Transformer特征增强
-            # featuret0, featuret1 = self.transformer(feature0, feature2,
-            #                                       attn_type=attn_type,
-            #                                       attn_num_splits=attn_splits,
-            #                                       )
-
-            # features0, features2 = self.transformer(feature0, feature1,
-            #                                       attn_type=attn_type,
-            #                                       attn_num_splits=attn_splits,
-            #                                       )
-
-            # # correlation and softmax
-            # if task == 'depth':
-            #     # first generate depth candidates
-            #     b, _, h, w = feature0.size()
-            #     depth_candidates = torch.linspace(min_depth, max_depth, num_depth_candidates).type_as(feature0)
-            #     depth_candidates = depth_candidates.view(1, num_depth_candidates, 1, 1).repeat(b, 1, h,
-            #                                                                                    w)  # [B, D, H, W]
-
-
-            # else:
-            #     if corr_radius == -1:  # global matching
-            #         #flow_pred = global_correlation_softmax(featuret0, featuret1, pred_bidir_flow)[0]
-            #         flow_pred = global_correlation_softmax(featuret0, featuret1)[0]
-            #         #disp_pred = global_correlation_softmax_stereo(features0, features2)[0]
-            #         disp_pred = global_correlation_softmax_stereo(features0, features2)[0] #迁移学习 变形图像作为参考图像 参考图像作为变形图像
-                    
-
-            #     else:  # local matching
-            #         flow_pred = local_correlation_softmax(featuret0, featuret1, corr_radius)[0]
-            #         #disp_pred = global_correlation_softmax_stereo(features0, features2)[0]
-            #         disp_pred = global_correlation_softmax_stereo(features0, features2)[0] #迁移学习 变形图像作为参考图像 参考图像作为变形图像
-                    
-
-            # # flow or residual flow
-            # flow = flow + flow_pred if flow is not None else flow_pred
-            # disp = disp + disp_pred if disp is not None else disp_pred
-                
-
-            #随机初始化RAFT迭代的位移初值
+          
             N,C,H,W = img0.shape
             coords0 = torch.meshgrid(torch.arange(H//8,device=img0.device),torch.arange(W//8,device=img0.device))
             coords0 = torch.stack(coords0[::-1],dim=0).float()
@@ -241,50 +184,21 @@ class UniDIC(nn.Module):
 
             disp = disp.clamp(min=0)  # positive disparity
 
-            # # upsample to the original resolution for supervison at training time only 训练执行 测试不执行
-            # if self.training:
-            #     flow_bilinear = self.upsample_flow(flow, None, bilinear=True, upsample_factor=upsample_factor,
-            #                                        is_depth=task == 'depth')
-            #     flow_preds.append(flow_bilinear)
-
-            #     disp_bilinear = self.upsample_flow(disp, None, bilinear=True, upsample_factor=upsample_factor,
-            #                                        is_depth=task == 'depth')
-            #     disp_preds.append(disp_bilinear)
-
-
-            # # bilinear exclude the last one 不执行
-            # if self.training and scale_idx < self.num_scales - 1:
-            #     flow_up = self.upsample_flow(flow, featuret0, bilinear=True,
-            #                                  upsample_factor=upsample_factor,
-            #                                  is_depth=task == 'depth')
-            #     flow_preds.append(flow_up)
-            #     disp_up = self.upsample_flow(disp, features0, bilinear=True,
-            #                                  upsample_factor=upsample_factor,
-            #                                  is_depth=task == 'depth')
-            #     disp_preds.append(disp_up)
-            #执行
+           
             if scale_idx == self.num_scales - 1:
                 if not self.reg_refine:
-                    # upsample to the original image resolution   直接输出预测的位移场
-                    disp_pad = torch.cat((-disp, torch.zeros_like(disp)), dim=1)  # disp_pad:[B, 2, H, W] features0:[B, 128, H, W]
+                    disp_pad = torch.cat((-disp, torch.zeros_like(disp)), dim=1) 
                     disp_up_pad = self.upsample_flow(disp_pad, feature0)
-                    disp_up = -disp_up_pad[:, :1]  # [B, 1, H, W]
+                    disp_up = -disp_up_pad[:, :1] 
                     disp_preds.append(disp_up)
                     flow_up = self.upsample_flow(flow, feature0)
                     flow_preds.append(flow_up)
 
 
                 else:
-                    # #正常输出视差######--------结束
-                    # disp_pad = torch.cat((-disp, torch.zeros_like(disp)),dim=1)  # disp_pad:[B, 2, H, W] features0:[B, 128, H, W]
-                    # disp_up_pad = self.upsample_flow(disp_pad, features0)
-                    # disp_up = -disp_up_pad[:, :1]  # [B, 1, H, W]
-                    # disp_preds.append(disp_up)
-                    # # 正常输出视差######--------结束
-                    # task-specific local regression refinement
-                    # supervise current flow
+                  
                     if self.training:
-                        #print('flow:',flow.size())  #32*32
+                        #print('flow:',flow.size()) 
                         flow_up = self.upsample_flow(flow, feature0, bilinear=True,
                                                      upsample_factor=upsample_factor,
                                                      is_depth=task == 'depth')
@@ -304,86 +218,69 @@ class UniDIC(nn.Module):
 
 
                         if task == "stereo":
-                            zeros = torch.zeros_like(disp)  # [B, 1, H, W]
+                            zeros = torch.zeros_like(disp)  
                             # NOTE: reverse disp, disparity is positive
-                            displace = torch.cat((-disp, zeros), dim=1)  # [B, 2, H, W]
+                            displace = torch.cat((-disp, zeros), dim=1) 
                             correlation = local_correlation_with_flow(
                                 feature0_ori,
                                 feature1_ori,
                                 flow=displace,
                                 local_radius=4,
-                            )  # [B, (2R+1)^2, H, W]
+                            )  
                             proj = self.refine_proj(feature0)
-
                             net, inp = torch.chunk(proj, chunks=2, dim=1)
-
                             net = torch.tanh(net)
                             inp = torch.relu(inp)
-
-                            net, up_mask, residual_disp = self.refine(net, inp, correlation, disp.clone(),
-                                                                      )
+                            net, up_mask, residual_disp = self.refine(net, inp, correlation, disp.clone(),)                                                          
                             disp = disp + residual_disp
                             disp = disp.clamp(min=0)  # positive
 
 
                         else:
-                            # 下面的是优化光流的
                             correlation_flow = local_correlation_with_flow(
                                 feature0_ori,
                                 feature2_ori,
                                 flow=flow,
                                 local_radius=4,
-                            )  # [B, (2R+1)^2, H, W]
+                            )  
                             #proj = self.refine_proj(featuret0)
-                            #print('flow:',flow.size())  #([1, 2, 32, 32])
+                            #print('flow:',flow.size())  
                             proj = self.refine_proj(feature0)
 
 
                             net, inp = torch.chunk(proj, chunks=2, dim=1)
-
                             net = torch.tanh(net)
                             inp = torch.relu(inp)
-
                             net, up_mask, residual_flow = self.refine_flow(net, inp, correlation_flow , flow.clone(),)
                             flow = flow + residual_flow
 
-                            # 下面的是优化视差的
-                            zeros = torch.zeros_like(disp)  # [B, 1, H, W]
+
+                            zeros = torch.zeros_like(disp)  
                             # NOTE: reverse disp, disparity is positive
-                            #displace = torch.cat((-disp, zeros), dim=1)  # [B, 2, H, W]
+                            #displace = torch.cat((-disp, zeros), dim=1) 
                             displace = disp  
-                            #print('disp的大小：',displace.size())
-                            #displace = disp  
+                    
                             correlation_disp = local_correlation_with_flow(
                                 feature0_ori,
                                 feature1_ori,
                                 flow=displace,
                                 local_radius=4,
-                            )  # [B, (2R+1)^2, H, W]
-                            proj = self.refine_proj(feature0)
-
-                            # correlation_disp = local_correlation_with_flow(
-                            #     feature1_ori,
-                            #     feature0_ori,
-                            #     flow=displace,
-                            #     local_radius=4,
-                            # )  # [B, (2R+1)^2, H, W]
-                            # proj = self.refine_proj(feature1)  #迁移学习 变形图像作为参考图像 参考图像作为变形图像
-                            
+                            )  
+                            proj = self.refine_proj(feature0)                                          
                             net, inp = torch.chunk(proj, chunks=2, dim=1)
                             
                             net = torch.tanh(net)
                             inp = torch.relu(inp)
                             
-                            net, up_mask, residual_disp = self.refine_disp(net, inp, correlation_disp, disp.clone(),
-                                                                      )
+                            net, up_mask, residual_disp = self.refine_disp(net, inp, correlation_disp, disp.clone(),)
+                                                           
                             disp = disp + residual_disp
                             disp = disp.clamp(min=0)  # positive
 
                         if self.training or refine_iter_idx == num_reg_refine - 1:
                             if task == "stereo":
                                 disp_pad = torch.cat((-disp, torch.zeros_like(disp)),
-                                                     dim=1)  # disp_pad:[B, 2, H, W] features0:[B, 128, H, W]
+                                                     dim=1) 
 
                                 disp_up = upsample_flow_with_mask(disp_pad, up_mask, upsample_factor=self.upsample_factor,
                                                                   is_depth=task == 'depth')
@@ -393,20 +290,12 @@ class UniDIC(nn.Module):
 
 
                             else:
-                                # 下面的是优化光流的
                                 flow_up = upsample_flow_with_mask(flow, up_mask, upsample_factor=self.upsample_factor,
                                                                   is_depth=task == 'depth')
                                 flow_preds.append(flow_up)
 
-                                # #只优化计算flow的时候 disp_preds列表的长度为0 这个是不做优化处理的视差
-                                # disp_bilinear = self.upsample_flow(disp, None, bilinear=True,
-                                #                                    upsample_factor=upsample_factor,
-                                #                                    is_depth=task == 'depth')
-                                # disp_preds.append(disp_bilinear)
-
-                                # 下面的是优化视差的
                                 disp_pad = torch.cat((-disp, torch.zeros_like(disp)),
-                                                     dim=1)  # disp_pad:[B, 2, H, W] features0:[B, 128, H, W]
+                                                     dim=1) 
                                 
                                 disp_up = upsample_flow_with_mask(disp_pad, up_mask,
                                                                   upsample_factor=self.upsample_factor,
@@ -414,23 +303,7 @@ class UniDIC(nn.Module):
                                 disp_up = -disp_up[:, :1]
                                 
                                 disp_preds.append(disp_up)
-                                
-                                # flow_bilinear = self.upsample_flow(flow, None, bilinear=True,
-                                #                                    upsample_factor=upsample_factor,
-                                #                                    is_depth=task == 'depth')
-                                # flow_preds.append(flow_bilinear)
+                           
 
-
-        #if task == 'stereo':
-
-        # for i in range(len(disp_preds)):
-        #     #disp_preds[i] = disp_preds[i].squeeze(1)  # [B, H, W]
-        #     print('disp的大小：',disp_preds[i].size())
-
-      
         return [flow_preds, disp_preds] 
         
-
-
-
-
