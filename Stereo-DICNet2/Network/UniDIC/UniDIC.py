@@ -32,7 +32,7 @@ class UniDIC(nn.Module):
         self.upsample_factor = upsample_factor
         self.reg_refine = reg_refine
 
-        # CNN 特征提取
+        # CNN Extract features
         self.backbone = CNNEncoder(output_dim=self.feature_channels, num_output_scales=self.num_scales)
 
         # Transformer
@@ -63,12 +63,11 @@ class UniDIC(nn.Module):
                                            )
 
     def feature_extraction(self, img0, img1, img2):
-        concat = torch.cat((img0, img1, img2), dim=0)  # [3B, C, H, W]
-        features = self.backbone(concat)  # list of [3B, C, H, W], resolution from high to low
+        concat = torch.cat((img0, img1, img2), dim=0) 
+        features = self.backbone(concat)  
 
         # reverse: resolution from low to high
         features = features[::-1]
-
         feature0, feature1, feature2 = [], [], []
 
         for i in range(len(features)):
@@ -95,9 +94,7 @@ class UniDIC(nn.Module):
 
         return up_flow
 
-    print('前向传播')
     def forward(self, img0, img1, img2):
-        print('前向传播')
         attn_type = None,
         attn_splits_list = [2],
         corr_radius_list = [-1],
@@ -110,8 +107,6 @@ class UniDIC(nn.Module):
         max_depth = 1. / 10,
         num_depth_candidates = 64,
         pred_bidir_depth = False,
-
-        print('1111')
         results_dict = {}
         flow_preds = []
         disp_preds = []
@@ -122,7 +117,6 @@ class UniDIC(nn.Module):
         flow = None
         disp = None
 
-
         if task != 'depth':
             assert len(attn_splits_list) == len(corr_radius_list) == len(prop_radius_list) == self.num_scales
         else:
@@ -130,13 +124,8 @@ class UniDIC(nn.Module):
 
         for scale_idx in range(self.num_scales):
             feature0, feature1, feature2 = feature0_list[scale_idx], feature1_list[scale_idx],feature2_list[scale_idx]
-
-
             feature0_ori, feature1_ori, feature2_ori = feature0, feature1, feature2
-
-            upsample_factor = self.upsample_factor * (2 ** (self.num_scales - 1 - scale_idx))   #8*(2**(1-1-0)=8
-
-
+            upsample_factor = self.upsample_factor * (2 ** (self.num_scales - 1 - scale_idx))   
             if scale_idx > 0:
                 assert task != 'depth'  # not supported for multi-scale depth model
                 flow = F.interpolate(flow, scale_factor=2, mode='bilinear', align_corners=True) * 2
@@ -145,15 +134,15 @@ class UniDIC(nn.Module):
 
             if disp is not None:
               disp = disp.detach()
-              zeros = torch.zeros_like(disp)  # [B, 1, H, W]
-              displace = torch.cat((-disp, zeros), dim=1)  # [B, 2, H, W]
-              feature1 = flow_warp(feature1, displace)  # [B, C, H, W]
+              zeros = torch.zeros_like(disp) 
+              displace = torch.cat((-disp, zeros), dim=1) 
+              feature1 = flow_warp(feature1, displace)  
 
 
 
             if flow is not None:
                 flow = flow.detach()
-                feature1 = flow_warp(feature1, flow)  # [B, C, H, W]
+                feature1 = flow_warp(feature1, flow)  
 
             attn_splits = attn_splits_list[scale_idx]
             if task != 'depth':
@@ -181,9 +170,8 @@ class UniDIC(nn.Module):
                 # first generate depth candidates
                 b, _, h, w = feature0.size()
                 depth_candidates = torch.linspace(min_depth, max_depth, num_depth_candidates).type_as(feature0)
-                depth_candidates = depth_candidates.view(1, num_depth_candidates, 1, 1).repeat(b, 1, h,
-                                                                                               w)  # [B, D, H, W]
-
+                depth_candidates = depth_candidates.view(1, num_depth_candidates, 1, 1).repeat(b, 1, h, w)
+                                                                                               
 
             else:
                 if corr_radius == -1:  # global matching
@@ -227,9 +215,9 @@ class UniDIC(nn.Module):
             if scale_idx == self.num_scales - 1:
                 if not self.reg_refine:
                     # upsample to the original image resolution
-                    disp_pad = torch.cat((-disp, torch.zeros_like(disp)), dim=1)  # [B, 2, H, W]
+                    disp_pad = torch.cat((-disp, torch.zeros_like(disp)), dim=1) 
                     disp_up_pad = self.upsample_flow(disp_pad, features0)
-                    disp_up = -disp_up_pad[:, :1]  # [B, 1, H, W]
+                    disp_up = -disp_up_pad[:, :1]  
                     disp_preds.append(disp_up)
 
                     flow_up = self.upsample_flow(flow, featuret0)
@@ -250,15 +238,15 @@ class UniDIC(nn.Module):
                         flow = flow.detach()
 
                         if task == 'stereo':
-                            zeros = torch.zeros_like(flow)  # [B, 1, H, W]
+                            zeros = torch.zeros_like(flow)  
                             # NOTE: reverse disp, disparity is positive
-                            displace = torch.cat((-flow, zeros), dim=1)  # [B, 2, H, W]
+                            displace = torch.cat((-flow, zeros), dim=1) 
                             correlation = local_correlation_with_flow(
                                 feature0_ori,
                                 feature1_ori,
                                 flow=displace,
                                 local_radius=4,
-                            )  # [B, (2R+1)^2, H, W]
+                            ) 
                         elif task == 'depth':
                             if pred_bidir_depth and refine_iter_idx == 0:
                                 intrinsics_curr = intrinsics_curr.repeat(2, 1, 1)
@@ -278,7 +266,7 @@ class UniDIC(nn.Module):
                                 feature1_ori,
                                 flow=flow_from_depth,
                                 local_radius=4,
-                            )  # [B, (2R+1)^2, H, W]
+                            ) 
 
                         else:
                             correlation = local_correlation_with_flow(
@@ -286,7 +274,7 @@ class UniDIC(nn.Module):
                                 feature1_ori,
                                 flow=flow,
                                 local_radius=4,
-                            )  # [B, (2R+1)^2, H, W]
+                            )  
 
                         proj = self.refine_proj(feature0)
 
@@ -317,11 +305,11 @@ class UniDIC(nn.Module):
                                     # last one convex upsampling
                                     # NOTE: clamp depth due to the zero padding in the unfold in the convex upsampling
                                     # pad depth to 2 channels as flow
-                                    depth_pad = torch.cat((flow, torch.zeros_like(flow)), dim=1)  # [B, 2, H, W]
+                                    depth_pad = torch.cat((flow, torch.zeros_like(flow)), dim=1) 
                                     depth_up_pad = self.upsample_flow(depth_pad, feature0,
                                                                       is_depth=True).clamp(min=min_depth,
                                                                                            max=max_depth)
-                                    flow_up = depth_up_pad[:, :1]  # [B, 1, H, W]
+                                    flow_up = depth_up_pad[:, :1]  
 
                             else:
                                 flow_up = upsample_flow_with_mask(flow, up_mask, upsample_factor=self.upsample_factor,
@@ -329,17 +317,8 @@ class UniDIC(nn.Module):
 
                             flow_preds.append(flow_up)
 
-        #if task == 'stereo':
         print(len(disp_preds))
         for i in range(len(disp_preds)):
-            disp_preds[i] = disp_preds[i].squeeze(1)  # [B, H, W]
+            disp_preds[i] = disp_preds[i].squeeze(1) 
 
-
-
-        #results_dict.update({'flow_preds': flow_preds,'disp_preds': disp_preds})
-        #return results_dict
-        print('1111')
         return [flow_preds, disp_preds]
-
-    print('前向传播')
-
