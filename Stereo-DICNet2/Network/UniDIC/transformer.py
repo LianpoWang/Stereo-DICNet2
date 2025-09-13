@@ -42,7 +42,7 @@ class TransformerLayer(nn.Module):
     def forward(self, source, target,
                 height=None,
                 width=None,
-                shifted_window_attn_mask=None,   #滑动窗口的掩码
+                shifted_window_attn_mask=None,   
                 shifted_window_attn_mask_1d=None,
                 attn_type='swin',
                 with_shift=False,
@@ -55,9 +55,9 @@ class TransformerLayer(nn.Module):
         is_self_attn = (query - key).abs().max() < 1e-6
 
         # single-head attention
-        query = self.q_proj(query)  # [B, L, C]
-        key = self.k_proj(key)  # [B, L, C]
-        value = self.v_proj(value)  # [B, L, C]
+        query = self.q_proj(query) 
+        key = self.k_proj(key) 
+        value = self.v_proj(value) 
 
         if attn_type == 'swin' and attn_num_splits > 1:  # self, cross-attn: both swin 2d
             if self.nhead > 1:
@@ -88,7 +88,7 @@ class TransformerLayer(nn.Module):
                                                                      )
                     else:
                         # full 2d attn
-                        message = single_head_full_attention(query, key, value)  # [N, L, C]
+                        message = single_head_full_attention(query, key, value)
 
                 else:
                     # cross attn 1d
@@ -113,7 +113,7 @@ class TransformerLayer(nn.Module):
                                                                      )
                     else:
                         # full 2d attn
-                        message = single_head_full_attention(query, key, value)  # [N, L, C]
+                        message = single_head_full_attention(query, key, value) 
                 else:
                     if attn_num_splits > 1:
                         assert shifted_window_attn_mask_1d is not None
@@ -132,9 +132,9 @@ class TransformerLayer(nn.Module):
                                                                 )
 
         else:
-            message = single_head_full_attention(query, key, value)  # [B, L, C]
+            message = single_head_full_attention(query, key, value) 
 
-        message = self.merge(message)  # [B, L, C]
+        message = self.merge(message)  
         message = self.norm1(message)
 
         if not self.no_ffn:
@@ -174,7 +174,7 @@ class TransformerBlock(nn.Module):
                 with_shift=False,
                 attn_num_splits=None,
                 ):
-        # source, target: [B, L, C]
+
 
         # self attention
         source = self.self_attn(source, source,
@@ -231,10 +231,10 @@ class FeatureTransformer(nn.Module):
 
 
         b, c, h, w = feature0.shape
-        assert self.d_model == c   #通道维度128
+        assert self.d_model == c  
 
-        feature0 = feature0.flatten(-2).permute(0, 2, 1)  # [B, H*W, C]
-        feature1 = feature1.flatten(-2).permute(0, 2, 1)  # [B, H*W, C]
+        feature0 = feature0.flatten(-2).permute(0, 2, 1) 
+        feature1 = feature1.flatten(-2).permute(0, 2, 1) 
 
         # 2d attention
         if 'swin' in attn_type and attn_num_splits > 1:
@@ -250,7 +250,7 @@ class FeatureTransformer(nn.Module):
                 shift_size_h=window_size_h // 2,
                 shift_size_w=window_size_w // 2,
                 device=feature0.device,
-            )  # [K*K, H/K*W/K, H/K*W/K]
+            )  
         else:
             shifted_window_attn_mask = None
 
@@ -269,8 +269,8 @@ class FeatureTransformer(nn.Module):
             shifted_window_attn_mask_1d = None
 
         # concat feature0 and feature1 in batch dimension to compute in parallel
-        concat0 = torch.cat((feature0, feature1), dim=0)  # [2B, H*W, C]
-        concat1 = torch.cat((feature1, feature0), dim=0)  # [2B, H*W, C]
+        concat0 = torch.cat((feature0, feature1), dim=0) 
+        concat1 = torch.cat((feature1, feature0), dim=0) 
 
         for i, layer in enumerate(self.layers):
             concat0 = layer(concat0, concat1,
@@ -286,10 +286,11 @@ class FeatureTransformer(nn.Module):
             # update feature1
             concat1 = torch.cat(concat0.chunk(chunks=2, dim=0)[::-1], dim=0)
 
-        feature0, feature1 = concat0.chunk(chunks=2, dim=0)  # [B, H*W, C]
+        feature0, feature1 = concat0.chunk(chunks=2, dim=0) 
 
         # reshape back
-        feature0 = feature0.view(b, h, w, c).permute(0, 3, 1, 2).contiguous()  # [B, C, H, W]
-        feature1 = feature1.view(b, h, w, c).permute(0, 3, 1, 2).contiguous()  # [B, C, H, W]
+        feature0 = feature0.view(b, h, w, c).permute(0, 3, 1, 2).contiguous()  
+        feature1 = feature1.view(b, h, w, c).permute(0, 3, 1, 2).contiguous()  
 
         return feature0, feature1
+
