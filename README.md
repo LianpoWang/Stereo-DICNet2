@@ -10,8 +10,16 @@ Stereo-DICNet2 is implemented in PyTorch and tested with Ubuntu, please install 
 * scipy;
 * CUDA;
 # File Structure
+The Stereo-DICNet2/Network 
 ```
- .. SDAS - 
+  ├── UniDIC                       # contains model for Stereo-DICNet2
+  ├── datasetS                     # scripts to generate speckle image dataset
+  ├── loss                         # 
+  ├── utils                        # test scripts and notebooks for sanity checking data
+  ├── main.py                      # install dependencies from this file
+  ├── test.py                      # test scripts
+
+
 ```
 # About dataset
 Baidu cloud Link: https://pan.baidu.com/s/1bgAjIH4MTuX_hTk0wspTGg?pwd=xi9h <br/> 
@@ -24,11 +32,7 @@ Train the Stereo-DICNet2 model using python3 `Stereo-DICNet2/Network/main.py`
  .. SDAS -
  .. SDAS -
  .
-  ├── notebooks                             # contains ML model for DisplacementNet and notebook for testing ML model
-  ├── dataset_generation                    # scripts to generate speckle image dataset
-  ├── notebooks_archive                     # contains previously developed ML models to sanity check against
-  ├── test                                  # test scripts and notebooks for sanity checking data
-  ├── requirements.txt                      # install dependencies from this file
+  
   └── README.md
 ```
 # Testing
