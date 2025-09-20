@@ -1,14 +1,5 @@
-
-
-
-I. Generate a dataset
-II. Train the model
-III. Testing
-Some testing scripts to check sanity of data and real tensile image samples
-
-
 # Stereo-DICNet2
-PyTorch implementation of UnDICnet (DIC method based on unsupervised learning )
+A unified and physics-guided speckle matching network for three-dimensional deformation measurement
 
 # This repository includes:
 * inferring scripts; 
@@ -19,6 +10,10 @@ PyTorch implementation of UnDICnet (DIC method based on unsupervised learning )
 # About dataset
 Baidu cloud Link: https://pan.baidu.com/s/1bgAjIH4MTuX_hTk0wspTGg?pwd=xi9h <br/> 
 Extract the code:xi9h
+# Generate a dataset
+# Train the model
+# Testing
+Some testing scripts to check sanity of data and real tensile image samples
 # Results
 ## Example 1
 ![image](result/res1.gif)
