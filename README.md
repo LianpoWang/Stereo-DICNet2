@@ -20,19 +20,16 @@ The Stereo-DICNet2/Network:
   ├── test.py                      # test scripts
   └── README.md
 ```
-# About dataset
+## About dataset
 Baidu cloud Link: https://pan.baidu.com/s/1bgAjIH4MTuX_hTk0wspTGg?pwd=xi9h <br/> 
 Extract the code:xi9h
-# Generate a dataset
+## Generate a dataset
 First generate a dataset using python3 `Stereo-DICNet2/Network/datasets/SpeckleDataset.py`
-# Train the model
+## Train the model
 Train the Stereo-DICNet2 model using python3 `Stereo-DICNet2/Network/main.py`
-# Testing
+## Testing
 Some testing scripts to check sanity of data and real tensile image samples `Stereo-DICNet2/Network/test.py`
 
-# Results
-## Example 1
+## Results
 ![image](Stereo-DICNet2/Network/utils/result.png)
-## Example 2
-![image](result/res2.gif)
 
