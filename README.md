@@ -21,7 +21,8 @@ First generate a dataset using python3 `Stereo-DICNet2/Network/datasets/SpeckleD
 # Train the model
 Train the Stereo-DICNet2 model using python3 `Stereo-DICNet2/Network/main.py`
 ```
- .. SDAS - 
+ .. SDAS -
+ .. SDAS -
 ```
 # Testing
 Some testing scripts to check sanity of data and real tensile image samples `Stereo-DICNet2/Network/test.py`
