@@ -29,10 +29,6 @@ Extract the code:xi9h
 First generate a dataset using python3 `Stereo-DICNet2/Network/datasets/SpeckleDataset.py`
 # Train the model
 Train the Stereo-DICNet2 model using python3 `Stereo-DICNet2/Network/main.py`
-```
- .. SDAS -
-
-```
 # Testing
 Some testing scripts to check sanity of data and real tensile image samples `Stereo-DICNet2/Network/test.py`
 
@@ -42,5 +38,3 @@ Some testing scripts to check sanity of data and real tensile image samples `Ste
 ## Example 2
 ![image](result/res2.gif)
 
-# Acknowledgement 
-Part of our codes are adapted from PWC, UnFlow and UPflow, we thank the authors for their contributions.
