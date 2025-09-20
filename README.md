@@ -18,7 +18,7 @@ Train the Stereo-DICNet2 model using python3 `Stereo-DICNet2/Network/main.py`
  .. SDAS - 
 ```
 # Testing
-Some testing scripts to check sanity of data and real tensile image samples
+Some testing scripts to check sanity of data and real tensile image samples `Stereo-DICNet2/Network/test.py`
 
 # Results
 ## Example 1
