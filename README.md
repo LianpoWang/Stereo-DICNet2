@@ -11,6 +11,7 @@ A unified and physics-guided speckle matching network for three-dimensional defo
 Baidu cloud Link: https://pan.baidu.com/s/1bgAjIH4MTuX_hTk0wspTGg?pwd=xi9h <br/> 
 Extract the code:xi9h
 # Generate a dataset
+First generate a dataset using python3 dataset_generation/generate_specklepattern.py
 # Train the model
 Train the Stereo-DICNet2 model using the pytorch
 ```
