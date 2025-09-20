@@ -19,8 +19,6 @@ The Stereo-DICNet2/Network:
   ├── main.py                      # train the Stereo-DICNet2 model
   ├── test.py                      # test scripts
   └── README.md
-
-
 ```
 # About dataset
 Baidu cloud Link: https://pan.baidu.com/s/1bgAjIH4MTuX_hTk0wspTGg?pwd=xi9h <br/> 
