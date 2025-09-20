@@ -2,18 +2,14 @@
 A unified and physics-guided speckle matching network for three-dimensional deformation measurement
 
 # Dependencies
-* inferring scripts; 
-* pretrain model;
-* Sample 14
-* Sample 15
-* 
 Stereo-DICNet2 is implemented in PyTorch and tested with Ubuntu, please install the dependencies using pip install.
-    Python 3.9
-    PyTorch 
-    Torchvision
-    numpy
-    scipy
-    CUDA
+* Python 3.9; 
+* PyTorch;
+* Torchvision;
+* numpy;
+* scipy;
+* CUDA;
+
 # About dataset
 Baidu cloud Link: https://pan.baidu.com/s/1bgAjIH4MTuX_hTk0wspTGg?pwd=xi9h <br/> 
 Extract the code:xi9h
