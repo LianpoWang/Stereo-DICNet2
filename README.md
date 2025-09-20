@@ -15,7 +15,7 @@ The Stereo-DICNet2/Network:
   ├── UniDIC                       # contains model for Stereo-DICNet2
   ├── datasetS                     # scripts to generate speckle image dataset
   ├── loss                         # scripts to Loss function design
-  ├── utils                        # 
+  ├── utils                        # tool scripts
   ├── main.py                      # train the Stereo-DICNet2 model
   ├── test.py                      # test scripts
   └── README.md
