@@ -23,13 +23,14 @@ Train the Stereo-DICNet2 model using python3 `Stereo-DICNet2/Network/main.py`
 ```
  .. SDAS -
  .. SDAS -
-```  .
+ .
   ├── notebooks                             # contains ML model for DisplacementNet and notebook for testing ML model
   ├── dataset_generation                    # scripts to generate speckle image dataset
   ├── notebooks_archive                     # contains previously developed ML models to sanity check against
   ├── test                                  # test scripts and notebooks for sanity checking data
   ├── requirements.txt                      # install dependencies from this file
   └── README.md
+```
 # Testing
 Some testing scripts to check sanity of data and real tensile image samples `Stereo-DICNet2/Network/test.py`
 
