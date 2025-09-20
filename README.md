@@ -14,10 +14,11 @@ The Stereo-DICNet2/Network:
 ```
   ├── UniDIC                       # contains model for Stereo-DICNet2
   ├── datasetS                     # scripts to generate speckle image dataset
-  ├── loss                         # 
-  ├── utils                        # test scripts and notebooks for sanity checking data
-  ├── main.py                      # install dependencies from this file
+  ├── loss                         # scripts to Loss function design
+  ├── utils                        # 
+  ├── main.py                      # train the Stereo-DICNet2 model
   ├── test.py                      # test scripts
+  └── README.md
 
 
 ```
@@ -30,10 +31,7 @@ First generate a dataset using python3 `Stereo-DICNet2/Network/datasets/SpeckleD
 Train the Stereo-DICNet2 model using python3 `Stereo-DICNet2/Network/main.py`
 ```
  .. SDAS -
- .. SDAS -
- .
-  
-  └── README.md
+
 ```
 # Testing
 Some testing scripts to check sanity of data and real tensile image samples `Stereo-DICNet2/Network/test.py`
