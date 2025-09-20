@@ -13,7 +13,7 @@ Extract the code:xi9h
 # Generate a dataset
 First generate a dataset using python3 `Stereo-DICNet2/Network/datasets/SpeckleDataset.py`
 # Train the model
-Train the Stereo-DICNet2 model using the pytorch
+Train the Stereo-DICNet2 model using python3 `Stereo-DICNet2/Network/main.py`
 ```
  .. SDAS - 
 ```
