@@ -1,7 +1,7 @@
-# Stereo-DICNet2
+## Stereo-DICNet2
 A unified and physics-guided speckle matching network for three-dimensional deformation measurement
 
-# Dependencies
+## Dependencies
 Stereo-DICNet2 is implemented in PyTorch and tested with Ubuntu, please install the dependencies using pip install.
 * Python 3.9; 
 * PyTorch;
@@ -9,7 +9,7 @@ Stereo-DICNet2 is implemented in PyTorch and tested with Ubuntu, please install 
 * numpy;
 * scipy;
 * CUDA;
-# File Structure
+## File Structure
 The Stereo-DICNet2/Network:
 ```
   ├── UniDIC                       # contains model for Stereo-DICNet2
@@ -31,5 +31,6 @@ Train the Stereo-DICNet2 model using python3 `Stereo-DICNet2/Network/main.py`
 Some testing scripts to check sanity of data and real tensile image samples `Stereo-DICNet2/Network/test.py`
 
 ## Results
+Stereo-DICNet2 model measurement results:
 ![image](Stereo-DICNet2/Network/utils/result.png)
 
