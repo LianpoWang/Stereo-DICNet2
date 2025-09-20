@@ -32,7 +32,7 @@ Some testing scripts to check sanity of data and real tensile image samples `Ste
 
 # Results
 ## Example 1
-![image](result/res1.gif)
+![image](utils/result.png)
 ## Example 2
 ![image](result/res2.gif)
 
