@@ -24,7 +24,7 @@ The Stereo-DICNet2/Network:
 Baidu cloud Link: https://pan.baidu.com/s/1bgAjIH4MTuX_hTk0wspTGg?pwd=xi9h <br/> 
 Extract the code:xi9h
 ## Generate a dataset
-First generate a dataset using python3 `Stereo-DICNet2/Network/datasets/SpeckleDataset.py`.
+First generate a dataset using python3 `Stereo-DICNet2/Network/datasets/SpeckleDataset.py`. <br/> 
 Readers can generate more appropriate datasets to retrain our network to handle more complex deformations.
 ## Train the model
 Train the Stereo-DICNet2 model using python3 `Stereo-DICNet2/Network/main.py`
