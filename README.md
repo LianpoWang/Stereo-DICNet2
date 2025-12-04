@@ -6,7 +6,7 @@ Stereo-DICNet2 is implemented in PyTorch and tested with Ubuntu, please install 
 * Python 3.9; 
 * PyTorch;
 * Torchvision;
-* numpy;
+* numpy; 
 * scipy;
 * CUDA;
 ## File Structure
